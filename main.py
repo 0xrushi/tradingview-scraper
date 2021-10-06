@@ -6,6 +6,7 @@ import re
 import pandas as pd
 import csv
 from datetime import datetime
+from time import localtime
 
 def filter_raw_message(text):
     try:
@@ -64,7 +65,11 @@ def generate_csv(a):
             ind= int(xi[1])
             ts= datetime.fromtimestamp(float(xi[4])).strftime("%Y/%m/%d, %H:%M:%S")
             employee_writer.writerow([ind, ts, float(xi[5]), float(xi[6]), float(xi[7]), float(xi[8]), float(xi[9])])
-            
+# add txt output file            
+def create_output_file():
+    now = localtime()
+    fname = f"{now[0]}-{now[1]}-{now[2]}.txt"
+    return fname            
 
 
 # Initialize the headers needed for the websocket connection
@@ -115,6 +120,9 @@ while True:
         result = ws.recv()
         print(result)
         a=a+result+"\n"
+        with open(outfilename,"w") as ww:
+            ww.write(a)
+            ww.close()
     except Exception as e:
         print(e)
         break
