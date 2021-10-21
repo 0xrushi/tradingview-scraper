@@ -115,13 +115,14 @@ sendMessage(ws, "create_series", [chart_session, "s1", "s1", "symbol_1", "1", 50
 
 # Printing all the result
 a=""
+outfilename = create_output_file()
 while True:
     try:
         result = ws.recv()
         print(result)
-        a=a+result+"\n"
-        with open(outfilename,"w") as ww:
-            ww.write(a)
+        # a=a+result+"\n"
+        with open(outfilename,"a") as ww:
+            ww.write(result)
             ww.close()
     except Exception as e:
         print(e)
