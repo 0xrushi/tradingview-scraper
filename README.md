@@ -14,7 +14,11 @@ python main.py
 https://discord.gg/p77FMCBg
 
 
+
+
+
 ### Have a tradingview username and password?
+credits: [euvgub](https://github.com/euvgub)
 
 ```
 def get_auth_token():
