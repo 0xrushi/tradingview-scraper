@@ -9,3 +9,6 @@ pip install -r requirements.txt
 ```
 python main.py
 ```
+
+### Want to add something? file a PR and join this discord 
+https://discord.gg/p77FMCBg
