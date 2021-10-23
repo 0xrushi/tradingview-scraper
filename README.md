@@ -13,9 +13,7 @@ python main.py
 ### Want to add something? file a PR and join this discord 
 https://discord.gg/p77FMCBg
 
-
-
-
+<hr>
 
 ### Have a tradingview username and password?
 credits: [euvgub](https://github.com/euvgub)
@@ -45,3 +43,5 @@ if re.search('~m~\\d+~m~~h~\\d+', result):
             #Send ping message
             ws.send(result)
 ``` 
+
+<hr>
