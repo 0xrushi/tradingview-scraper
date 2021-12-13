@@ -5,8 +5,20 @@ import string
 import re
 import pandas as pd
 import csv
+import argparse
 from datetime import datetime
 from time import localtime
+
+# init argparser
+args = argparse.ArgumentParser()
+
+args.add_argument("-n", "--symbol", help="symbol", required=True)
+args.add_argument("-s", "--silent", help="silent", action="store_true")
+args.add_argument("-o", "--output", help="output", required=False)
+
+symbol = args.parse_args().symbol
+silent = args.parse_args().silent
+output = args.parse_args().output
 
 def filter_raw_message(text):
     try:
@@ -50,28 +62,6 @@ def sendRawMessage(ws, message):
 def sendMessage(ws, func, args):
     ws.send(createMessage(func, args))
 
-def generate_csv(a):
-    out= re.search('"s":\[(.+?)\}\]', a).group(1)
-    x=out.split(',{\"')
-    
-    with open('data_file.csv', mode='w', newline='') as data_file:
-        employee_writer = csv.writer(data_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-    
-        employee_writer.writerow(['index', 'date', 'open', 'high', 'low', 'close', 'volume'])
-        
-        for xi in x:
-            xi= re.split('\[|:|,|\]', xi)
-            print(xi)
-            ind= int(xi[1])
-            ts= datetime.fromtimestamp(float(xi[4])).strftime("%Y/%m/%d, %H:%M:%S")
-            employee_writer.writerow([ind, ts, float(xi[5]), float(xi[6]), float(xi[7]), float(xi[8]), float(xi[9])])
-# add txt output file            
-def create_output_file():
-    now = localtime()
-    fname = f"{now[0]}-{now[1]}-{now[2]}.txt"
-    return fname            
-
-
 # Initialize the headers needed for the websocket connection
 headers = json.dumps({
     # 'Connection': 'upgrade',
@@ -93,39 +83,44 @@ ws = create_connection(
     'wss://data.tradingview.com/socket.io/websocket',headers=headers)
 
 session= generateSession()
-print("session generated {}".format(session))
+if not silent:
+    print("session generated {}".format(session))
 
 chart_session= generateChartSession()
-print("chart_session generated {}".format(chart_session))
+if not silent:
+    print("chart_session generated {}".format(chart_session))
 
 # Then send a message through the tunnel 
 sendMessage(ws, "set_auth_token", ["unauthorized_user_token"])
 sendMessage(ws, "chart_create_session", [chart_session, ""])
 sendMessage(ws, "quote_create_session", [session])
 sendMessage(ws,"quote_set_fields", [session,"ch","chp","current_session","description","local_description","language","exchange","fractional","is_tradable","lp","lp_time","minmov","minmove2","original_name","pricescale","pro_name","short_name","type","update_mode","volume","currency_code","rchp","rtc"])
-sendMessage(ws, "quote_add_symbols",[session, "NASDAQ:AAPL", {"flags":['force_permission']}])
-sendMessage(ws, "quote_fast_symbols", [session,"NASDAQ:AAPL"])
+sendMessage(ws, "quote_add_symbols",[session, symbol, {"flags":['force_permission']}])
+sendMessage(ws, "quote_fast_symbols", [session,symbol])
 
 #st='~m~140~m~{"m":"resolve_symbol","p":}'
 #p1, p2 = filter_raw_message(st)
-sendMessage(ws, "resolve_symbol", [chart_session,"symbol_1","={\"symbol\":\"NASDAQ:AAPL\",\"adjustment\":\"splits\",\"session\":\"extended\"}"])
-sendMessage(ws, "create_series", [chart_session, "s1", "s1", "symbol_1", "1", 5000])
+sendMessage(ws, "resolve_symbol", [chart_session,"symbol_1","={\"symbol\":\"" + symbol + "\",\"adjustment\":\"splits\",\"session\":\"extended\"}"])
+if not silent:
+    sendMessage(ws, "create_series", [chart_session, "s1", "s1", "symbol_1", "1", 5000])
 #sendMessage(ws, "create_study", [chart_session,"st4","st1","s1","ESD@tv-scripting-101!",{"text":"BNEhyMp2zcJFvntl+CdKjA==_DkJH8pNTUOoUT2BnMT6NHSuLIuKni9D9SDMm1UOm/vLtzAhPVypsvWlzDDenSfeyoFHLhX7G61HDlNHwqt/czTEwncKBDNi1b3fj26V54CkMKtrI21tXW7OQD/OSYxxd6SzPtFwiCVAoPbF2Y1lBIg/YE9nGDkr6jeDdPwF0d2bC+yN8lhBm03WYMOyrr6wFST+P/38BoSeZvMXI1Xfw84rnntV9+MDVxV8L19OE/0K/NBRvYpxgWMGCqH79/sHMrCsF6uOpIIgF8bEVQFGBKDSxbNa0nc+npqK5vPdHwvQuy5XuMnGIqsjR4sIMml2lJGi/XqzfU/L9Wj9xfuNNB2ty5PhxgzWiJU1Z1JTzsDsth2PyP29q8a91MQrmpZ9GwHnJdLjbzUv3vbOm9R4/u9K2lwhcBrqrLsj/VfVWMSBP","pineId":"TV_SPLITS","pineVersion":"8.0"}])
 
 
 # Printing all the result
 a=""
-outfilename = create_output_file()
 while True:
     try:
         result = ws.recv()
-        print(result)
-        # a=a+result+"\n"
-        with open(outfilename,"a") as ww:
-            ww.write(result)
-            ww.close()
+        if not silent:
+            print(result)
+        if silent:
+            if not re.search(r'"lp":(.*?),', result) is None:
+                print(re.search(r'"lp":(.*?),', result).group(1))
+        a=a+result+"\n"
+        if output:
+            with open(output,"a") as ww:
+                ww.write(result)
+                ww.close()
     except Exception as e:
         print(e)
         break
-    
-generate_csv(a)
