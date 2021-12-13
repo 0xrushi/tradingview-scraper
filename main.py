@@ -15,10 +15,12 @@ args = argparse.ArgumentParser()
 args.add_argument("-n", "--symbol", help="symbol", required=True)
 args.add_argument("-s", "--silent", help="silent", action="store_true")
 args.add_argument("-o", "--output", help="output", required=False)
+args.add_argument("-q", "--quit", help="quit on first reponse", action="store_true")
 
 symbol = args.parse_args().symbol
 silent = args.parse_args().silent
 output = args.parse_args().output
+exitoninput = args.parse_args().quit
 
 def filter_raw_message(text):
     try:
@@ -116,6 +118,8 @@ while True:
         if silent:
             if not re.search(r'"lp":(.*?),', result) is None:
                 print(re.search(r'"lp":(.*?),', result).group(1))
+                if exitoninput:
+                    exit(0)
         a=a+result+"\n"
         if output:
             with open(output,"a") as ww:
